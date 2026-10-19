@@ -1,0 +1,23 @@
+# Plex Media Server on the MSI Cubi 5 (10M)
+# Portainer: Stacks -> Add stack -> name "plex" -> paste this into the Web editor.
+#
+# DRAFT - fill in every <PLACEHOLDER> before deploying. See SETUP.md.
+
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest   # same image family as the arr stack (user "abc")
+    container_name: plex
+    network_mode: host                       # Plex uses port 32400 + local discovery; host mode is simplest
+    environment:
+      - PUID=1000                            # <CONFIRM> run `id` on the Cubi; use your user's uid
+      - PGID=1000                            # <CONFIRM> gid from the same `id` output
+      - TZ=America/Chicago                   # <CONFIRM> your time zone
+      - VERSION=docker                       # update Plex by pulling a new image, not in-app
+      - PLEX_CLAIM=<PLEX_CLAIM_TOKEN>        # from https://plex.tv/claim - expires in 4 minutes, first start only
+    devices:
+      - /dev/dri:/dev/dri                    # Intel graphics -> hardware transcoding (Quick Sync)
+    volumes:
+      - /home/<CUBI_USER>/docker/plex/config:/config     # Plex database + metadata (bind mount = easy to back up and browse)
+      - /home/<CUBI_USER>/docker/plex/transcode:/transcode  # temp files while transcoding
+      - /mnt/media:/media:ro                 # Synology video share, read-only (Plex never needs to write here)
+    restart: unless-stopped
