@@ -1,0 +1,66 @@
+# Frigate config - goes in /home/<CUBI_USER>/docker/frigate/config/config.yml on the Cubi.
+# DRAFT - one example camera. Copy the "front_door" block for each extra camera.
+
+mqtt:
+  enabled: false                 # turn on later if you add Home Assistant
+
+detectors:
+  ov:
+    type: openvino
+    device: GPU                  # Cubi's Intel graphics
+
+model:                           # small model that ships inside the Frigate image
+  width: 300
+  height: 300
+  input_tensor: nhwc
+  input_pixel_format: bgr
+  path: /openvino-model/ssdlite_mobilenet_v2.xml
+  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
+
+ffmpeg:
+  hwaccel_args: preset-vaapi     # 10th-gen Intel decodes H.264 and H.265 this way
+
+record:
+  enabled: true
+  continuous:
+    days: 0                      # no 24/7 recording (saves NAS space) - set e.g. 3 if you want it
+  motion:
+    days: 7                      # keep any footage with motion for a week
+  alerts:
+    retain:
+      days: 30
+      mode: motion
+  detections:
+    retain:
+      days: 14
+      mode: motion
+
+snapshots:
+  enabled: true
+  retain:
+    default: 30
+
+objects:
+  track:
+    - person
+    - car
+    - dog
+    - cat
+
+cameras:
+  front_door:                    # <CONFIRM> name each camera - lowercase, no spaces
+    ffmpeg:
+      inputs:
+        # Most cameras have a high-res "main" stream and a low-res "sub" stream.
+        # Detect on the sub stream (cheap), record the main stream (quality).
+        # Reolink example paths shown - <CONFIRM> for your camera brand.
+        - path: rtsp://<CAMERA_USER>:{FRIGATE_RTSP_PASSWORD}@<CAMERA_IP>:554/h264Preview_01_sub
+          roles:
+            - detect
+        - path: rtsp://<CAMERA_USER>:{FRIGATE_RTSP_PASSWORD}@<CAMERA_IP>:554/h264Preview_01_main
+          roles:
+            - record
+    detect:
+      width: 640                 # <CONFIRM> must match the sub stream's resolution
+      height: 360
+      fps: 5

@@ -1,0 +1,29 @@
+# Frigate NVR on the MSI Cubi 5 (10M)
+# Portainer: Stacks -> Add stack -> name "frigate" -> paste this into the Web editor.
+#
+# DRAFT - fill in every <PLACEHOLDER> before deploying. See SETUP.md.
+
+services:
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:stable
+    container_name: frigate
+    restart: unless-stopped
+    stop_grace_period: 30s                   # give Frigate time to finish writing recordings on shutdown
+    shm_size: "256mb"                        # <CONFIRM> enough for ~2-4 cameras at 720p detect; raise if logs show "Bus error"
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128   # Intel graphics: video decoding + OpenVINO detection (shared with Plex, that's fine)
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/<CUBI_USER>/docker/frigate/config:/config   # config.yml + Frigate database (must stay on local disk, not the NAS)
+      - /mnt/frigate:/media/frigate                     # recordings + snapshots on the Synology "surveillance" share
+      - type: tmpfs                          # 1GB in-memory scratch space for recording segments (saves disk wear)
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "8971:8971"                          # web UI (login required)
+      - "8554:8554"                          # RTSP re-stream (for Home Assistant etc. later)
+      - "8555:8555/tcp"                      # WebRTC live view
+      - "8555:8555/udp"
+    environment:
+      - FRIGATE_RTSP_PASSWORD=<CAMERA_PASSWORD>   # referenced in config.yml as {FRIGATE_RTSP_PASSWORD}

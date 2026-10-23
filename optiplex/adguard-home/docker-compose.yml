@@ -1,0 +1,18 @@
+# AdGuard Home on the OptiPlex
+# Portainer: Stacks -> Add stack -> name "adguard" -> paste this into the Web editor.
+#
+# DRAFT - fill in every <PLACEHOLDER> before deploying. See SETUP.md.
+
+services:
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    ports:
+      - "53:53/tcp"                          # DNS - the whole point; port 53 must be free on the OptiPlex (see SETUP Step 1)
+      - "53:53/udp"
+      - "3003:3000/tcp"                      # first-time setup wizard only (host 3000 is usually Homepage)
+      - "8083:80/tcp"                        # admin web UI after setup - <CONFIRM> 8083 is free
+    volumes:
+      - /home/<OPTIPLEX_USER>/docker/adguardhome/work:/opt/adguardhome/work   # query logs + stats
+      - /home/<OPTIPLEX_USER>/docker/adguardhome/conf:/opt/adguardhome/conf   # AdGuardHome.yaml (settings, blocklists, password hash)
+    restart: unless-stopped

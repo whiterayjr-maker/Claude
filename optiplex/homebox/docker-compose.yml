@@ -1,0 +1,20 @@
+# Homebox (home inventory) on the OptiPlex
+# Portainer: Stacks -> Add stack -> name "homebox" -> paste this into the Web editor.
+#
+# DRAFT - fill in every <PLACEHOLDER> before deploying. See SETUP.md.
+
+services:
+  homebox:
+    image: ghcr.io/sysadminsmedia/homebox:latest   # maintained fork - the original hay-kot/homebox is archived
+    container_name: homebox
+    ports:
+      - "7745:7745"                          # web UI - <CONFIRM> 7745 is free
+    environment:
+      - TZ=America/Chicago                   # <CONFIRM> same as the Plex stack
+      - HBOX_LOG_LEVEL=info
+      - HBOX_OPTIONS_ALLOW_REGISTRATION=true # set to false after you create your account (SETUP Step 3)
+      - HBOX_WEB_MAX_UPLOAD_SIZE=25          # MB per attachment - room for receipt PDFs and manuals
+      - HBOX_AUTH_API_KEY_PEPPER=<API_KEY_PEPPER>   # from `openssl rand -base64 48`; must never change once set
+    volumes:
+      - /home/<OPTIPLEX_USER>/docker/homebox/data:/data   # database + photos + attachments
+    restart: unless-stopped

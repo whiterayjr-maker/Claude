@@ -1,0 +1,28 @@
+# n8n (workflow automation) on the OptiPlex
+# Portainer: Stacks -> Add stack -> name "n8n" -> paste this into the Web editor.
+#
+# DRAFT - fill in every <PLACEHOLDER> before deploying. See SETUP.md.
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5678:5678"                          # web UI + webhooks - <CONFIRM> 5678 is free
+    environment:
+      - TZ=America/Chicago                   # <CONFIRM> same as the Plex stack
+      - GENERIC_TIMEZONE=America/Chicago     # used by Schedule triggers ("every day at 7am")
+      - N8N_ENCRYPTION_KEY=<N8N_ENCRYPTION_KEY>   # from `openssl rand -hex 32`; encrypts saved passwords/API keys - lose it and every credential is gone
+      - N8N_HOST=<OPTIPLEX_IP>
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://<OPTIPLEX_IP>:5678/
+      - N8N_SECURE_COOKIE=false              # needed to log in over plain http on the LAN; remove if you put it behind HTTPS later
+      - N8N_DIAGNOSTICS_ENABLED=false        # no telemetry to n8n
+      - N8N_RUNNERS_ENABLED=true
+      - EXECUTIONS_DATA_PRUNE=true           # auto-delete old run history so the database doesn't grow forever
+      - EXECUTIONS_DATA_MAX_AGE=336          # hours (14 days)
+    volumes:
+      - /home/<OPTIPLEX_USER>/docker/n8n/data:/home/node/.n8n     # database, workflows, credentials
+      - /home/<OPTIPLEX_USER>/docker/n8n/files:/files             # shared folder for workflows that read/write files
+    restart: unless-stopped
